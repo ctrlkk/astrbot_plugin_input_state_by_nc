@@ -9,7 +9,7 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 from astrbot.core.provider.entities import LLMResponse, ProviderRequest
 
 
-@register("InputStateByNapCat", "ctrlkk", "[仅NapCat]输入状态显示", "1.0.0")
+@register("input_state_by_napcat", "ctrlkk", "[仅NapCat]输入状态显示", "1.0.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)

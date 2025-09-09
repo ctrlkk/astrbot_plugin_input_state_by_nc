@@ -1,5 +1,5 @@
-name: InputStateByNapCat
-desc: 在napcat中显示输入状态
+name: input_state_by_napcat
+desc: "[仅NapCat]输入状态显示"
 version: v1.0
 author: ctrlkk
 repo: https://github.com/ctrlkk/astrbot_plugin_input_state_by_nc
