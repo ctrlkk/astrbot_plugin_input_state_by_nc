@@ -3,17 +3,21 @@ from typing import Dict, Tuple
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
+from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 from astrbot.core.provider.entities import LLMResponse, ProviderRequest
 
 
-@register("input_state_by_napcat", "ctrlkk", "[仅NapCat]输入状态显示", "1.0.0")
+@register("input_state_by_napcat", "ctrlkk", "[仅NapCat]输入状态显示", "1.1")
 class MyPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self._tasks: Dict[str, Tuple[asyncio.Task, asyncio.Event]] = {}
+
+        self.interval = config.get("interval", 0.5)
+        self.timeout = config.get("timeout", 600)
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -41,7 +45,7 @@ class MyPlugin(Star):
 
             await asyncio.wait_for(loop(), timeout=timeout)
         except asyncio.TimeoutError:
-            logger.info(f"针对uid {uid} 的任务超时")
+            logger.warning(f"针对uid {uid} 的任务超时")
         finally:
             stop_event.set()
             self._tasks.pop(uid, None)
@@ -81,7 +85,8 @@ class MyPlugin(Star):
         payloads = {"user_id": user_id, "event_type": 1}
         await client.api.call_action("set_input_status", **payloads)
 
-    @filter.on_llm_request()
+    # 设置为1，在其它插件进入on_llm_request阶段前就开始显示，避免插件耗时操作等待太多时间
+    @filter.on_llm_request(priority=1)
     async def on_llm_req(self, event: AstrMessageEvent, req: ProviderRequest):
         """请求开始"""
         uid = event.unified_msg_origin
