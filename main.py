@@ -10,14 +10,14 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 from astrbot.core.provider.entities import LLMResponse, ProviderRequest
 
 
-@register("input_state_by_napcat", "ctrlkk", "[仅NapCat]输入状态显示", "1.1")
+@register("input_state_by_napcat", "ctrlkk", "[仅NapCat]输入状态显示", "1.2")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self._tasks: Dict[str, Tuple[asyncio.Task, asyncio.Event]] = {}
 
         self.interval = config.get("interval", 0.5)
-        self.timeout = config.get("timeout", 600)
+        self.timeout = config.get("timeout", 120)
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -32,8 +32,8 @@ class MyPlugin(Star):
         self,
         uid: str,
         event: AstrMessageEvent,
-        interval: float = 1.0,
-        timeout: float = 30.0,
+        interval: float,
+        timeout: float,
     ):
         stop_event = self._tasks[uid][1]
         try:
@@ -54,8 +54,8 @@ class MyPlugin(Star):
         self,
         uid: str,
         event: AstrMessageEvent,
-        interval: float = 1.0,
-        timeout: float = 30.0,
+        interval: float,
+        timeout: float,
     ):
         if uid in self._tasks and not self._tasks[uid][0].done():
             return  # 已经有任务在运行
@@ -90,7 +90,9 @@ class MyPlugin(Star):
     async def on_llm_req(self, event: AstrMessageEvent, req: ProviderRequest):
         """请求开始"""
         uid = event.unified_msg_origin
-        await self._start_input_state_task(uid, event, interval=0.5, timeout=60.0)
+        await self._start_input_state_task(
+            uid, event, interval=self.interval, timeout=self.timeout
+        )
 
     @filter.on_llm_response()
     async def on_llm_resp(self, event: AstrMessageEvent, resp: LLMResponse):
